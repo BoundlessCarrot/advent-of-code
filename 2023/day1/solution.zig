@@ -17,49 +17,64 @@ fn openFile(path: []const u8) ![]u8 {
     return data;
 }
 
-// Replace words with numbers, line-by-line, recursively
+// Replace all words in a line with numbers recursively
+// fn sanitizeData(line: []const u8) ![]const u8 {
+//     switch (line) {
+//         containsSubstring(line, "one") => {
+//             replaceSubstring(line, "one", "1");
+//             sanitizeData(line);
+//         },
+//         containsSubstring(line, "two") => {
+//             replaceSubstring(line, "two", "2");
+//             sanitizeData(line);
+//         },
+//         containsSubstring(line, "three") => {
+//             replaceSubstring(line, "three", "3");
+//             sanitizeData(line);
+//         },
+//         containsSubstring(line, "four") => {
+//             replaceSubstring(line, "four", "4");
+//             sanitizeData(line);
+//         },
+//         containsSubstring(line, "five") => {
+//             replaceSubstring(line, "five", "5");
+//             sanitizeData(line);
+//         },
+//         containsSubstring(line, "six") => {
+//             replaceSubstring(line, "six", "6");
+//             sanitizeData(line);
+//         },
+//         containsSubstring(line, "seven") => {
+//             replaceSubstring(line, "seven", "7");
+//             sanitizeData(line);
+//         },
+//         containsSubstring(line, "eight") => {
+//             replaceSubstring(line, "eight", "8");
+//             sanitizeData(line);
+//         },
+//         containsSubstring(line, "nine") => {
+//             replaceSubstring(line, "nine", "9");
+//             sanitizeData(line);
+//         },
+//         else => {
+//             return line;
+//         },
+//     }
+// }
+
 fn sanitizeData(line: []const u8) ![]const u8 {
-    switch (line) {
-        containsSubstring(line, "one") => {
-            replaceSubstring(line, "one", "1");
-            sanitizeData(line);
-        },
-        containsSubstring(line, "two") => {
-            replaceSubstring(line, "two", "2");
-            sanitizeData(line);
-        },
-        containsSubstring(line, "three") => {
-            replaceSubstring(line, "three", "3");
-            sanitizeData(line);
-        },
-        containsSubstring(line, "four") => {
-            replaceSubstring(line, "four", "4");
-            sanitizeData(line);
-        },
-        containsSubstring(line, "five") => {
-            replaceSubstring(line, "five", "5");
-            sanitizeData(line);
-        },
-        containsSubstring(line, "six") => {
-            replaceSubstring(line, "six", "6");
-            sanitizeData(line);
-        },
-        containsSubstring(line, "seven") => {
-            replaceSubstring(line, "seven", "7");
-            sanitizeData(line);
-        },
-        containsSubstring(line, "eight") => {
-            replaceSubstring(line, "eight", "8");
-            sanitizeData(line);
-        },
-        containsSubstring(line, "nine") => {
-            replaceSubstring(line, "nine", "9");
-            sanitizeData(line);
-        },
-        else => {
-            return line;
-        },
+    var substrings = [_][]const u8{ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+    var replacement_chars = [_][]const u8{ "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+
+    var newline: []u8 = undefined;
+
+    for (substrings, 0..) |substring, i| {
+        if (containsSubstring(line, substring)) {
+            newline = try replaceSubstring(line, substring, replacement_chars[i]);
+        }
     }
+
+    return newline;
 }
 
 fn containsSubstring(str: []const u8, substr: []const u8) bool {
@@ -67,15 +82,18 @@ fn containsSubstring(str: []const u8, substr: []const u8) bool {
     return result;
 }
 
-fn replaceSubstring(str: []const u8, substr: []const u8, replacement: []const u8) ![]const u8 {
+fn replaceSubstring(str: []const u8, substr: []const u8, replacement: []const u8) ![]u8 {
+    var allocator = std.heap.page_allocator;
     var replacement_size = std.mem.replacementSize(u8, str, substr, replacement);
-    var output: [replacement_size]u8 = &.{};
+    var output: []u8 = try allocator.alloc(u8, replacement_size);
+    defer allocator.free(output);
     _ = std.mem.replace(u8, str, substr, replacement, output);
     return output;
 }
 
 pub fn main() !void {
     // read from file
+    @breakpoint();
     const data = @as([]u8, try openFile("input"));
     var lines = split(u8, data, "\n");
     var running_count: usize = 0;
@@ -87,6 +105,7 @@ pub fn main() !void {
         defer temp.deinit();
 
         // for pt 2 only
+        @breakpoint();
         var sanitized_line = try sanitizeData(line);
 
         // iterate within line (going forward)
